@@ -1,29 +1,30 @@
-import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # for importing the parent dirs
+from typing import List, Dict, Tuple
 from collections import defaultdict
+
 import numpy as np
-from common.gridworld import GridWorld
-from common.utils import greedy_probs
+from dl_scratch4.common.gridworld import GridWorld, Coord
+from dl_scratch4.common.utils import greedy_probs
 
 
 class QLearningAgent:
-    def __init__(self):
-        self.gamma = 0.9
-        self.alpha = 0.8
-        self.epsilon = 0.1
-        self.action_size = 4
+    def __init__(self) -> None:
+        self.gamma: float = 0.9
+        self.alpha: float = 0.8
+        self.epsilon: float = 0.1
+        self.action_size: int = 4
 
-        random_actions = {0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25}
-        self.pi = defaultdict(lambda: random_actions)
-        self.b = defaultdict(lambda: random_actions)
-        self.Q = defaultdict(lambda: 0)
+        random_actions: Dict[int, float] = {0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25}
+        self.pi: Dict[Coord, Dict[int, float]] = defaultdict(lambda: random_actions)
+        self.b: Dict[Coord, Dict[int, float]] = defaultdict(lambda: random_actions)
+        self.Q: Dict[Tuple[Coord, int], float] = defaultdict(lambda: 0)
 
-    def get_action(self, state):
-        action_probs = self.b[state]
-        actions = list(action_probs.keys())
-        probs = list(action_probs.values())
+    def get_action(self, state: Coord) -> int:
+        action_probs: Dict[int, float] = self.b[state]
+        actions: List[int] = list(action_probs.keys())
+        probs: List[float] = list(action_probs.values())
         return np.random.choice(actions, p=probs)
 
-    def update(self, state, action, reward, next_state, done):
+    def update(self, state: Coord, action: int, reward: float, next_state: Coord, done: bool) -> None:
         if done:
             next_q_max = 0
         else:
