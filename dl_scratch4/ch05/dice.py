@@ -1,4 +1,5 @@
 import numpy as np
+from rich import print
 
 
 def sample(dices=2):
