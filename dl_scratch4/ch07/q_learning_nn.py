@@ -1,18 +1,25 @@
-import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # for importing the parent dirs
-import matplotlib.pyplot as plt
+from typing import List, Dict, Tuple
+
 import numpy as np
+from nptyping import NDArray, Shape, Int, Float
+import matplotlib.pyplot as plt
+import seaborn as sns
 from dezero import Model
 from dezero import optimizers
 import dezero.functions as F
 import dezero.layers as L
-from common.gridworld import GridWorld
+from dl_scratch4.common.gridworld import GridWorld, Coord
+from rich import print
 
 
-def one_hot(state):
+sns.set_style('whitegrid')
+
+
+def one_hot(state: Coord) -> NDArray[Shape['Batch, 12'], Float]:
     HEIGHT, WIDTH = 3, 4
-    vec = np.zeros(HEIGHT * WIDTH, dtype=np.float32)
+    vec: NDArray[Shape['12'], Float] = np.zeros(HEIGHT * WIDTH, dtype=np.float32)
     y, x = state
-    idx = WIDTH * y + x
+    idx: int = WIDTH * y + x
     vec[idx] = 1.0
     return vec[np.newaxis, :]
 
@@ -31,34 +38,42 @@ class QNet(Model):
 
 class QLearningAgent:
     def __init__(self):
-        self.gamma = 0.9
-        self.lr = 0.01
-        self.epsilon = 0.1
-        self.action_size = 4
+        self.gamma: float = 0.9
+        self.lr: float = 0.01
+        self.epsilon: float = 0.1
+        self.action_size: int = 4
 
-        self.qnet = QNet()
+        self.qnet: QNet = QNet()
         self.optimizer = optimizers.SGD(self.lr)
         self.optimizer.setup(self.qnet)
 
-    def get_action(self, state_vec):
+    def get_action(
+            self, 
+            state_vec: NDArray[Shape['Batch, 12'], Float]) -> int:
         if np.random.rand() < self.epsilon:
             return np.random.choice(self.action_size)
         else:
             qs = self.qnet(state_vec)
             return qs.data.argmax()
 
-    def update(self, state, action, reward, next_state, done):
+    def update(
+            self,
+            state: NDArray[Shape['Batch, 12'], Float], 
+            action: int, 
+            reward: float, 
+            next_state: NDArray[Shape['Batch, 12'], Float], 
+            done: bool) -> float:
         if done:
             next_q = np.zeros(1)  # [0.]
         else:
-            next_qs = self.qnet(next_state)
-            next_q = next_qs.max(axis=1)
+            next_qs: NDArray[Shape['Batch, Action'], Float] = self.qnet(next_state)
+            next_q: NDArray[Shape['Batch'], Float] = next_qs.max(axis=1)
             next_q.unchain()
 
-        target = self.gamma * next_q + reward
-        qs = self.qnet(state)
-        q = qs[:, action]
-        loss = F.mean_squared_error(target, q)
+        target: NDArray[Shape['Batch, Action'], Float] = self.gamma * next_q + reward
+        qs: NDArray[Shape['Batch, Action'], Float] = self.qnet(state)
+        q: NDArray[Shape['Batch'], Float] = qs[:, action]
+        loss: float = F.mean_squared_error(target, q)
 
         self.qnet.cleargrads()
         loss.backward()
