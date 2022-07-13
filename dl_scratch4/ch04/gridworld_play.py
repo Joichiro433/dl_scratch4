@@ -1,11 +1,11 @@
-if '__file__' in globals():
-    import os, sys
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import numpy as np
-from common.gridworld import GridWorld
+from typing import Dict
 
-env = GridWorld()
-V = {}
+import numpy as np
+from dl_scratch4.common.gridworld import GridWorld, Coord
+
+
+env: GridWorld = GridWorld()
+V: Dict[Coord, float] = {}
 for state in env.states():
-    V[state] = np.random.randn()
+    V[state] = np.random.randn()  # ダミーの状態価値関数
 env.render_v(V)

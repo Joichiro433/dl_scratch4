@@ -1,51 +1,57 @@
+from typing import List, Dict, Tuple, Optional
+
 import numpy as np
-import common.gridworld_render as render_helper
+from nptyping import NDArray, Shape, Int, Float
+import dl_scratch4.common.gridworld_render as render_helper
+
+
+Coord = Tuple[int, int]
 
 
 class GridWorld:
     def __init__(self):
-        self.action_space = [0, 1, 2, 3]
-        self.action_meaning = {
+        self.action_space: List[int] = [0, 1, 2, 3]
+        self.action_meaning: Dict[int, str] = {
             0: "UP",
             1: "DOWN",
             2: "LEFT",
             3: "RIGHT",
         }
 
-        self.reward_map = np.array(
+        self.reward_map: NDArray[Shape['Hight, Width'], Float] = np.array(
             [[0, 0, 0, 1.0],
              [0, None, 0, -1.0],
              [0, 0, 0, 0]]
         )
-        self.goal_state = (0, 3)
-        self.wall_state = (1, 1)
-        self.start_state = (2, 0)
-        self.agent_state = self.start_state
+        self.goal_state: Coord = (0, 3)
+        self.wall_state: Coord = (1, 1)
+        self.start_state: Coord = (2, 0)
+        self.agent_state: Coord = self.start_state
 
     @property
-    def height(self):
+    def height(self) -> int:
         return len(self.reward_map)
 
     @property
-    def width(self):
+    def width(self) -> int:
         return len(self.reward_map[0])
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         return self.reward_map.shape
 
-    def actions(self):
+    def actions(self) -> List[int]:
         return self.action_space
 
-    def states(self):
+    def states(self) -> Coord:
         for h in range(self.height):
             for w in range(self.width):
                 yield (h, w)
 
-    def next_state(self, state, action):
-        action_move_map = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        move = action_move_map[action]
-        next_state = (state[0] + move[0], state[1] + move[1])
+    def next_state(self, state: Coord, action: int) -> Coord:
+        action_move_map: List[Coord] = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        move: Coord = action_move_map[action]
+        next_state: Coord = (state[0] + move[0], state[1] + move[1])
         ny, nx = next_state
 
         if nx < 0 or nx >= self.width or ny < 0 or ny >= self.height:
@@ -55,18 +61,18 @@ class GridWorld:
 
         return next_state
 
-    def reward(self, state, action, next_state):
+    def reward(self, state: Coord, action: int, next_state: Coord) -> float:
         return self.reward_map[next_state]
 
-    def reset(self):
+    def reset(self) -> Coord:
         self.agent_state = self.start_state
         return self.agent_state
 
-    def step(self, action):
-        state = self.agent_state
-        next_state = self.next_state(state, action)
-        reward = self.reward(state, action, next_state)
-        done = (next_state == self.goal_state)
+    def step(self, action: int) -> Tuple[Coord, float, bool]:
+        state: Coord = self.agent_state
+        next_state: Coord = self.next_state(state, action)
+        reward: float = self.reward(state, action, next_state)
+        done: bool = (next_state == self.goal_state)
 
         self.agent_state = next_state
         return next_state, reward, done
